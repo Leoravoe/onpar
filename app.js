@@ -9,6 +9,7 @@ const Employee = require('./model/employee')
 
 // app config
 const app = express()
+const PORT = process.env.PORT || 5000
 
 // middleware
 app.use(cors())
@@ -28,7 +29,7 @@ mongoose.connect(db_URI,{useNewUrlParser: true, useUnifiedTopology:true, useCrea
 
 const conn = mongoose.createConnection(db_URI,{useNewUrlParser: true, useUnifiedTopology:true},()=> console.log("connected to upload pdf"))
 
-app.listen(5000,()=>{
+app.listen(PORT,()=>{
     console.log('connected to port 5000')
 })
 
