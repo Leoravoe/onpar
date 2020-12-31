@@ -8,9 +8,9 @@
 <body>
     <h3><%= item.employeeID %></h3>
     <p><%= item._id %></p>
-    <% item.document.forEach(({filename}) =>{%>
+    <% item.document.forEach((res) =>{%>
             <div> 
-                <a href="/doc/<%= filename %>"><p><%= filename%></p></a>
+                <a href="/doc/<%= res %>"><p><%= res%></p></a>
             </div>
             
     <%})%>

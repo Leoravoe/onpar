@@ -46,17 +46,26 @@ const storage = new GridFsStorage({
     url: 'mongodb+srv://admin:admin@onpar.yfqrm.mongodb.net/OnparLab?retryWrites=true&w=majority',
     file: (req, file) => {
       return new Promise((resolve, reject) => {
-        crypto.randomBytes(16, (err, buf) => {
+        crypto.randomBytes(16, async (err, buf) => {
           if (err) {
             return reject(err);
           }
         //   const filename = buf.toString('hex') + path.extname(file.originalname);
           const filename = file.originalname;
-          const fileInfo = {
-            filename: filename,
-            bucketName: 'pdfs'
-          };
-          resolve(fileInfo);
+          const filenam = filename.split('.').slice(0, -1).join('.')
+          const result = await Employee.findOne({employeeID : filenam})
+          if (result){
+            await Employee.findOneAndUpdate({employeeID : filenam},{$push : {document: filename}})
+            const fileInfo = {
+                filename: filename,
+                bucketName: 'pdfs'
+              };
+              resolve(fileInfo);
+          }
+        //   const result = await Employee.findOneAndUpdate({employeeID : filenam},{employeeID : filenam, $push : {document: filename}})
+        //   console.log(result)
+        //   console.log(filenam);
+          
         });
       });
     }
@@ -71,26 +80,32 @@ app.get('/',async(req,res) => {
     // res.send('hello')
     res.render('index',{result})
 })
-app.post('/uploads',upload.array('file', 4),async(req,res) => {
+app.post('/uploads',upload.array('file', 12),async(req,res) => {
     let document = []
     const {employeeID} = req.body
     req.files.forEach(ele => {
-        document.push(ele)
+        document.push(ele.filename)
     })
     const doc = new Employee({
         employeeID,
         document
     })
     try {
-        const emp = await doc.save()
-        res.redirect('/')
+        if(employeeID){
+            await doc.save()
+            res.redirect('/')
+        }else{
+            res.status(200).redirect('/')
+        }
     } catch (error) {
         console.log(error.message)
     }
+    // res.redirect('/')
 })
 
 app.get('/:id',async(req,res) => {
     const result = await Employee.find({employeeID : req.params.id})
+    // console.log(result)
     // res.send('hello')
     // console.log(result)
     // console.log(result.employeeID)
