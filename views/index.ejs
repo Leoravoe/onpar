@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="employee">
+        <form action="/uploads" method="POST" enctype="multipart/form-data">
+          <label for="employeeID">employee_ID:</label>
+          <input type="text" id="employeeID" name="employeeID" required />
+          <label for="file">Choose file:</label>
+          <input type="file" id="file" name="file" onchange="showname()" multiple required />
+          <!-- <label for="body">Blog body:</label>
+          <textarea id="body" name="body" required></textarea> -->
+          <button>Submit</button>
+        </form>
+      </div>
+      <% if(result.length > 0){ %>
+        <% result.forEach((item) => { %>
+            <a href="/<%=item.employeeID %>">
+            <h3><%= item.employeeID %></h3>
+            <p><%= item._id %></p>
+            <%item.document.forEach((items)=>{%>
+                <p><%= items.filename %></p>
+            <%})%>
+            
+        </a>
+        <% }) %>
+        <% } else{ %>
+            <p>There is no employee details to display</p>
+            <% } %>
+
+            <script>
+                var nameemployee = document.getElementById('employeeID');
+                var namefile = document.getElementById('file');
+                function showname () {
+                    for(var i = 0; i < namefile.files.length; i++) {
+                        if(nameemployee.value !== namefile.files[i].name.split('.').slice(0, -1).join('.')){
+                            alert(`employeeID and filename of file ${namefile.files[i].name} is diff please with filename have same name as employeeid`)
+                        }
+                    }
+                };
+
+            </script>
+</body>
+</html>
