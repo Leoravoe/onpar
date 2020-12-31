@@ -76,7 +76,7 @@ const storage = new GridFsStorage({
 
 app.get('/',async(req,res) => {
     const result = await Employee.find()
-    console.log(result)
+    // console.log(result)
     // res.send('hello')
     res.render('index',{result})
 })
@@ -130,12 +130,14 @@ app.get('/doc/:filename', async (req,res)=>{
 
 app.delete('/:id', async (req, res) => {
     // console.log(req.params.id)
+    const id = req.params.id +".jpg"
+    console.log(id)
     try {
         await Employee.findOneAndDelete({ employeeID : req.params.id },async(err,employee) => {
             if (err) {
                 res.status(500).json({message:err})
             }
-            await gfs.files.remove({filename: req.params.id},(err,files) => {
+            await gfs.files.remove({filename: id},(err,files) => {
                 if (err) res.status(404).json({message:err})
                 res.status(200)
             })
