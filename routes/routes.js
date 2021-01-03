@@ -24,7 +24,7 @@ const storage = new GridFsStorage({
                 };
                 resolve(fileInfo);
             }else{
-              reject("employee not found")
+              reject("not found")
             }
           })
         } catch (error) {
