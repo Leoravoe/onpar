@@ -4,8 +4,9 @@ const cors = require('cors')
 const multer = require('multer')
 const Grid = require('gridfs-stream')
 const GridFsStorage = require('multer-gridfs-storage')
-const crypto = require('crypto')
+// const crypto = require('crypto')
 const Employee = require('./model/employee')
+require("dotenv").config();
 
 // app config
 const app = express()
@@ -21,7 +22,7 @@ app.set("view engine", "ejs");
 
 
 // db connection
-const db_URI = 'mongodb+srv://admin:admin@onpar.yfqrm.mongodb.net/OnparLab?retryWrites=true&w=majority'
+const db_URI = process.env.DB_URI
 mongoose.connect(db_URI,{useNewUrlParser: true, useUnifiedTopology:true, useCreateIndex: true})
 .then(() =>{
     console.log("connected to database ")
@@ -43,31 +44,27 @@ conn.once('open', () => {
 })
 
 const storage = new GridFsStorage({
-    url: 'mongodb+srv://admin:admin@onpar.yfqrm.mongodb.net/OnparLab?retryWrites=true&w=majority',
+    url: process.env.DB_URI ,
     file: (req, file) => {
-      return new Promise((resolve, reject) => {
-        crypto.randomBytes(16, async (err, buf) => {
-          if (err) {
-            return reject(err);
-          }
-        //   const filename = buf.toString('hex') + path.extname(file.originalname);
-          const filename = file.originalname;
-          const filenam = filename.split('.').slice(0, -1).join('.')
-          const result = await Employee.findOne({employeeID : filenam})
-          if (result){
-            await Employee.findOneAndUpdate({employeeID : filenam},{$push : {document: filename}})
-            const fileInfo = {
-                filename: filename,
-                bucketName: 'pdfs'
-              };
-              resolve(fileInfo);
-          }
-        //   const result = await Employee.findOneAndUpdate({employeeID : filenam},{employeeID : filenam, $push : {document: filename}})
-        //   console.log(result)
-        //   console.log(filenam);
-          
-        });
-      });
+        try {
+            return new Promise(async (resolve, reject) => {
+                const filename = file.originalname;
+                const filenam = filename.split('.').slice(0, -1).join('.')
+                const result = await Employee.findOne({employeeID : filenam})
+                if (result){
+                  await Employee.findOneAndUpdate({employeeID : filenam},{$push : {document: filename}})
+                  const fileInfo = {
+                      filename: filename,
+                      bucketName: 'pdfs'
+                    };
+                    resolve(fileInfo);
+                }else{
+                    reject("Employee not found");
+                }
+              });
+        } catch (error) {
+            console.log(error)
+        }
     }
   });
   const upload = multer({ storage });
