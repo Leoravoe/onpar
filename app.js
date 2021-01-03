@@ -1,11 +1,7 @@
 const express = require('express')
-const mongoose = require('mongoose')
 const cors = require('cors')
-const multer = require('multer')
-const Grid = require('gridfs-stream')
-const GridFsStorage = require('multer-gridfs-storage')
-// const crypto = require('crypto')
-const Employee = require('./model/employee')
+
+require('./db/conn')
 require("dotenv").config();
 
 // app config
@@ -20,127 +16,9 @@ app.use(express.static("public"))
 // register view engine
 app.set("view engine", "ejs");
 
-
-// db connection
-const db_URI = process.env.DB_URI
-mongoose.connect(db_URI,{useNewUrlParser: true, useUnifiedTopology:true, useCreateIndex: true})
-.then(() =>{
-    console.log("connected to database ")
-})
-
-const conn = mongoose.createConnection(db_URI,{useNewUrlParser: true, useUnifiedTopology:true},()=> console.log("connected to upload pdf"))
-
 app.listen(PORT,()=>{
     console.log('connected to port 5000')
 })
 
-
-// initializing grid storage engine gfs
-
-let gfs;
-conn.once('open', () => {
-    gfs = Grid(conn.db,mongoose.mongo)
-    gfs.collection('pdfs')
-})
-
-const storage = new GridFsStorage({
-    url: process.env.DB_URI ,
-    file: (req, file) => {
-        try {
-            return new Promise(async (resolve, reject) => {
-                const filename = file.originalname;
-                const filenam = filename.split('.').slice(0, -1).join('.')
-                const result = await Employee.findOne({employeeID : filenam})
-                if (result){
-                  await Employee.findOneAndUpdate({employeeID : filenam},{$push : {document: filename}})
-                  const fileInfo = {
-                      filename: filename,
-                      bucketName: 'pdfs'
-                    };
-                    resolve(fileInfo);
-                }else{
-                    reject("Employee not found");
-                }
-              });
-        } catch (error) {
-            console.log(error)
-        }
-    }
-  });
-  const upload = multer({ storage });
-
 // routes
-
-app.get('/',async(req,res) => {
-    const result = await Employee.find()
-    // console.log(result)
-    // res.send('hello')
-    res.render('index',{result})
-})
-app.post('/uploads',upload.array('file', 12),async(req,res) => {
-    let document = []
-    const {employeeID} = req.body
-    req.files.forEach(ele => {
-        document.push(ele.filename)
-    })
-    const doc = new Employee({
-        employeeID,
-        document
-    })
-    try {
-        if(employeeID){
-            await doc.save()
-            res.redirect('/')
-        }else{
-            res.status(200).redirect('/')
-        }
-    } catch (error) {
-        console.log(error.message)
-    }
-    // res.redirect('/')
-})
-
-app.get('/:id',async(req,res) => {
-    const result = await Employee.find({employeeID : req.params.id})
-    // console.log(result)
-    // res.send('hello')
-    // console.log(result)
-    // console.log(result.employeeID)
-    // console.log(result._id)
-    res.render('details',{item : result[0]})
-})
-
-app.get('/doc/:filename', async (req,res)=>{
-    // console.log(req.params.filename)
-    // res.send(req.params.filename)
-    await gfs.files.findOne({ filename: req.params.filename }, (err, file) => {
-        if (!file || file.length === 0) {
-            return res.status(404).json({
-                err: 'No files found'
-            })
-        }
-        // res.json(file)
-        const readStream = gfs.createReadStream(file.filename)
-        readStream.pipe(res)
-    })
-})
-
-app.delete('/:id', async (req, res) => {
-    // console.log(req.params.id)
-    const id = req.params.id +".jpg"
-    console.log(id)
-    try {
-        await Employee.findOneAndDelete({ employeeID : req.params.id },async(err,employee) => {
-            if (err) {
-                res.status(500).json({message:err})
-            }
-            await gfs.files.remove({filename: id},(err,files) => {
-                if (err) res.status(404).json({message:err})
-                res.status(200)
-            })
-        })
-        res.json({ redirect : '/'})
-    } catch (error) {
-        console.log(error.message)
-    }
-})
+app.use(require('./routes/routes'))
