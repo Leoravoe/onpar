@@ -11,7 +11,8 @@ const router = Router()
 const storage = new GridFsStorage({
     url: process.env.DB_URI ,
     file: (req, file) => {
-        return new Promise(async (resolve, reject) => {
+        try {
+          return new Promise(async (resolve, reject) => {
             const filename = file.originalname;
             const filenam = filename.split('.').slice(0, -1).join('.')
             const result = await Employee.findOne({employeeID : filenam})
@@ -23,9 +24,12 @@ const storage = new GridFsStorage({
                 };
                 resolve(fileInfo);
             }else{
-                return reject("Employee not found");
+              reject("employee not found")
             }
-          }).catch(err => console.log(err));
+          })
+        } catch (error) {
+          console.log(error)
+        }
     }
   });
   const upload = multer({ storage });
